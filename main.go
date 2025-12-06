@@ -32,7 +32,9 @@ type thumbnail struct {
 var videoThumbnails = map[uuid.UUID]thumbnail{}
 
 func main() {
-	godotenv.Load(".env")
+	if err := godotenv.Load(".env"); err != nil {
+		log.Fatal("Failed to load environment variables")
+	}
 
 	pathToDB := os.Getenv("DB_PATH")
 	if pathToDB == "" {
