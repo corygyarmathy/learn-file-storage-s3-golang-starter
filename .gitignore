@@ -5,3 +5,4 @@ assets/
 samples/
 .direnv/
 .envrc
+tmp/
