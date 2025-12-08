@@ -16,7 +16,7 @@ func (cfg apiConfig) ensureAssetsDir() error {
 	return nil
 }
 
-func getAssetPath(mediaType string) string {
+func getAssetKey(mediaType string) string {
 	base := make([]byte, 32)
 	_, err := rand.Read(base)
 	if err != nil {
@@ -36,6 +36,10 @@ func (cfg apiConfig) getAssetURL(assetPath string) string {
 	return fmt.Sprintf("http://localhost:%s/assets/%s", cfg.port, assetPath)
 }
 
+func (cfg apiConfig) getObjectURL(key string) string {
+	return fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", cfg.s3Bucket, cfg.s3Region, key)
+}
+
 func mediaTypeToExt(mediaType string) string {
 	exts, _ := mime.ExtensionsByType(mediaType)
 	ext := ""
@@ -50,4 +54,8 @@ func validateImageMediaType(mediaType string) bool {
 		return false
 	}
 	return true
+}
+
+func validateVideoMediaType(mediaType string) bool {
+	return mediaType == "video/mp4"
 }
