@@ -37,3 +37,10 @@ func mediaTypeToExt(mediaType string) string {
 	}
 	return ext
 }
+
+func validateImageMediaType(mediaType string) bool {
+	if mediaType != "image/jpeg" && mediaType != "image/png" {
+		return false
+	}
+	return true
+}

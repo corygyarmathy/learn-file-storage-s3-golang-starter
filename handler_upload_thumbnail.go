@@ -59,6 +59,10 @@ func (cfg *apiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		respondWithError(w, http.StatusBadRequest, "Missing Content-Type for thumbnail", nil)
 		return
 	}
+	if !validateImageMediaType(mediaType) {
+		respondWithError(w, http.StatusBadRequest, "Invalid file uploaded", nil)
+		return
+	}
 
 	assetPath := getAssetPath(videoID, mediaType)
 	assetDiskPath := cfg.getAssetDiskPath(assetPath)
