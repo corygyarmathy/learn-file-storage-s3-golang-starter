@@ -43,9 +43,11 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 	video, err := cfg.db.GetVideo(videoID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to get video from DB given the video ID", err)
+		return
 	}
 	if video.UserID != userID {
 		respondWithError(w, http.StatusUnauthorized, "Authenticated user ID does not match video user ID", nil)
+		return
 	}
 
 	fmt.Println("uploading video", videoID, "by user", userID)
