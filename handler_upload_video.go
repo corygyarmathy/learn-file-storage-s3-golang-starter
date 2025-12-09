@@ -7,6 +7,7 @@ import (
 	"mime"
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
@@ -94,6 +95,14 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, "Failed to seek start of temp video file", err)
 		return
 	}
+
+	orientation, err := getVideoOrientation(dst.Name())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to get video orientation", err)
+		return
+	}
+
+	key = path.Join(orientation, key)
 
 	_, err = cfg.s3Client.PutObject(r.Context(), &s3.PutObjectInput{
 		Bucket:      &cfg.s3Bucket,

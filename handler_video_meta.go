@@ -1,8 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"log"
 	"net/http"
+	"os/exec"
+	"strings"
 
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/database"
@@ -117,4 +123,64 @@ func (cfg *apiConfig) handlerVideosRetrieve(w http.ResponseWriter, r *http.Reque
 	}
 
 	respondWithJSON(w, http.StatusOK, videos)
+}
+
+func getVideoOrientation(filePath string) (string, error) {
+	aspectRatio, err := getVideoAspectRatio(filePath)
+	ratios := strings.Split(aspectRatio, ":")
+	w := ratios[0]
+	h := ratios[1]
+	if err != nil {
+		return "", fmt.Errorf("getting video orientation: %v", err)
+	}
+
+	log.Printf("video aspectRatio is %v:%v", w, h)
+
+	if w == "16" && h == "9" {
+		return "landscape", nil
+	} else if w == "9" && h == "16" {
+		return "portrait", nil
+	} else {
+		return "other", nil
+	}
+}
+
+func getVideoAspectRatio(filePath string) (string, error) {
+	cmd := exec.Command("ffprobe",
+		"-v", "error",
+		"-print_format", "json",
+		"-show_streams",
+		filePath)
+	var buffer bytes.Buffer
+	cmd.Stdout = &buffer
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("running ffprobe command: %v", err)
+	}
+
+	var metadata struct {
+		Streams []struct {
+			CodecType          string `json:"codec_type"`
+			DisplayAspectRatio string `json:"display_aspect_ratio,omitempty"`
+		} `json:"streams"`
+	}
+
+	if err := json.Unmarshal(buffer.Bytes(), &metadata); err != nil {
+		return "", fmt.Errorf("unmarshalling ffprobe json: %v", err)
+	}
+
+	if len(metadata.Streams) == 0 {
+		return "", errors.New("no video streams found")
+	}
+
+	var aspectRatio string
+	for i := range metadata.Streams {
+		if metadata.Streams[i].CodecType == "video" {
+			aspectRatio = metadata.Streams[i].DisplayAspectRatio
+		}
+	}
+	if aspectRatio == "" {
+		return "", errors.New("video display aspect ratio not found in ffprobe output")
+	}
+
+	return aspectRatio, nil
 }
